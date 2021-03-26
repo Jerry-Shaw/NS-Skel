@@ -8,6 +8,11 @@ class myClass
 {
     public function myFn(): array
     {
-        return 'myFn';
+        return ['myFn'];
+    }
+
+    public function myFn2($id, $Accept)
+    {
+        return $id;
     }
 }

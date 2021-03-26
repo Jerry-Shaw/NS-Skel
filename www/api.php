@@ -2,16 +2,18 @@
 
 require __DIR__ . '/../../NervSys/NS.php';
 
-$core_api = \Ext\libCoreApi::new();
+$core_api = \Ext\libCoreApi::new()
+    ->readHeaderKeys('TOKEN')
+    ->addCorsRecord('*', 'TOKEN');
 
-//Open core debug mode
-$core_api->setCoreDebug(true);
+//Check Token
+$core_api->hookBefore('api/', \app\hook::class, 'chkToken');
+//Check data sign
+$core_api->hookBefore('api/', \app\hook::class, 'chkSign');
+//Prepare API arguments
+$core_api->hookBefore('api/', \app\hook::class, 'prepareArgs');
 
-//Open CORS permission
-$core_api->addCorsRecord('*');
+//Call stats after API
+$core_api->hookAfter('api/', \app\hook::class, 'apiStats');
 
-//Add include path
-$core_api->addIncPath('pkgs/inc');
-
-//Start NS
 NS::new();
