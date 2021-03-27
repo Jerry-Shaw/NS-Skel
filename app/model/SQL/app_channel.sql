@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS `app_register`
     `app_id`      INT(10) UNSIGNED NOT NULL COMMENT 'App ID',
     `app_name`    VARCHAR(16)      NOT NULL COMMENT 'App Name',
     `app_company` VARCHAR(32)      NOT NULL COMMENT 'Company Name',
+    `add_time`    INT(10) UNSIGNED    NOT NULL COMMENT 'Add time',
     PRIMARY KEY `app_id` (`app_id`)
 ) DEFAULT CHARSET = utf8mb4;
 
