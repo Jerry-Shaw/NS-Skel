@@ -2,11 +2,13 @@
 
 namespace app;
 
+use app\model\channel;
 use Core\Lib\App;
 use Core\Lib\IOUnit;
 use Core\Lib\Router;
 use Core\Reflect;
 use Ext\libErrno;
+use ReflectionException;
 
 /**
  * Class hook
@@ -15,7 +17,7 @@ use Ext\libErrno;
  */
 class hook extends base
 {
-    public channel $channel;
+    public app_channel $app_channel;
 
     /**
      * hook constructor.
@@ -23,7 +25,7 @@ class hook extends base
     public function __construct()
     {
         parent::new();
-        $this->channel = channel::new();
+        $this->app_channel = app_channel::new();
     }
 
     /**
@@ -43,26 +45,45 @@ class hook extends base
             return false;
         }
 
-        //Validate app_id
+        //Validate app_key
         if ('' === $app_key) {
             libErrno::new()->set(1, 401);
             return false;
         }
 
-        //todo Read app_id & app_secret from DB by app_key
-        $app_id     = 'xxxx';
-        $app_secret = 'xxxx';
+        //Build cache key
+        $cache_key = 'app:' . $app_key;
+
+        //Read app info from cache
+        $app_info = $this->lib_cache->get($cache_key);
+
+        if (empty($app_info)) {
+            //Read app info from DB by app_key
+            $app_info = channel::new()->getInfoByKey($app_key);
+
+            //Only keep app_id, app_secret, app_status
+            unset($app_info['ch_id'], $app_info['app_key'], $app_info['app_comment'], $app_info['add_time']);
+
+            //Add cache
+            $this->lib_cache->set($app_key, $app_info);
+        }
 
         //App NOT registered
-        if ('' === $app_id || '' === $app_secret) {
+        if (empty($app_info)) {
             libErrno::new()->set(1, 402);
             return false;
         }
 
+        //Access blocked
+        if (0 !== $app_info['app_status']) {
+            libErrno::new()->set(1, 403);
+            return false;
+        }
+
         //Copy valid app data to channel
-        $this->channel->app_id     = &$app_id;
-        $this->channel->app_key    = &$app_key;
-        $this->channel->app_secret = &$app_secret;
+        $this->app_channel->app_id     = &$app_info['app_id'];
+        $this->app_channel->app_key    = &$app_key;
+        $this->app_channel->app_secret = &$app_info['app_secret'];
 
         //Copy data from IOUnit
         $input_data = IOUnit::new()->src_input;
@@ -84,7 +105,7 @@ class hook extends base
 
         //Compare data sign
         if ($sign !== hash('md5', $query)) {
-            libErrno::new()->set(1, 403);
+            libErrno::new()->set(1, 404);
             return false;
         }
 
@@ -95,7 +116,7 @@ class hook extends base
      * Prepare API arguments
      *
      * @return bool
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function prepareArgs(): bool
     {
@@ -114,7 +135,7 @@ class hook extends base
             $args = $reflect->getArgs($c[0], $c[1], $io_unit->src_input);
 
             if (!empty($args['diff'])) {
-                libErrno::new()->set(1, 404, 'Data error: [' . implode(', ', $args['diff']) . '] @ API #' . ($c[2] ?? $c[0] . '/' . $c[1]));
+                libErrno::new()->set(1, 405, 'Data error: [' . implode(', ', $args['diff']) . '] @ API #' . ($c[2] ?? $c[0] . '/' . $c[1]));
                 return false;
             }
 
@@ -136,9 +157,9 @@ class hook extends base
         $ip  = App::new()->client_ip;
         $cmd = Router::new()->cgi_cmd;
 
-        $app_id     = $this->channel->app_id;
-        $app_key    = $this->channel->app_key;
-        $app_secret = $this->channel->app_secret;
+        $app_id     = $this->app_channel->app_id;
+        $app_key    = $this->app_channel->app_key;
+        $app_secret = $this->app_channel->app_secret;
 
         //todo Copy user ID from input data or DB
         $user_id = 'xxxxx';

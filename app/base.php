@@ -4,11 +4,16 @@ namespace app;
 
 use Core\Factory;
 use Core\Lib\App;
+use Exception;
+use Ext\libCache;
 use Ext\libConfGet;
 use Ext\libErrno;
 use Ext\libLock;
 use Ext\libPDO;
 use Ext\libRedis;
+use PDO;
+use Redis;
+use RedisException;
 
 /**
  * Class base
@@ -19,18 +24,19 @@ class base extends Factory
 {
     public string $app_env = 'prod';
 
-    public \PDO   $pdo;
-    public \Redis $redis;
+    public PDO   $pdo;
+    public Redis $redis;
 
     public App        $lib_app;
     public libLock    $lib_lock;
     public libConfGet $lib_conf;
+    public libCache   $lib_cache;
     public libErrno   $lib_errno;
 
     /**
      * base constructor.
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function __construct()
     {
@@ -76,13 +82,14 @@ class base extends Factory
     /**
      * Init libraries
      *
-     * @throws \RedisException
+     * @throws RedisException
      */
     private function initLib(): void
     {
         $this->pdo   = libPDO::new($this->lib_conf->use('mysql'))->connect();
         $this->redis = libRedis::new($this->lib_conf->use('redis'))->connect();
 
-        $this->lib_lock = libLock::new()->bindRedis($this->redis);
+        $this->lib_lock  = libLock::new()->bindRedis($this->redis);
+        $this->lib_cache = libCache::new()->bindRedis($this->redis);
     }
 }

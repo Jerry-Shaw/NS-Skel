@@ -9,7 +9,7 @@ use Core\Factory;
  *
  * @package app
  */
-class channel extends Factory
+class app_channel extends Factory
 {
     public string $app_id     = '';
     public string $app_key    = '';
