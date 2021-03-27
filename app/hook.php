@@ -18,57 +18,49 @@ class hook extends base
     public string $app_key = '';
 
     /**
-     * Check TOKEN from header data
+     * Check data sign (remove FILES. add app_key. sort by keys)
      *
      * @param string $app_id
-     * @param string $uuid
-     * @param string $TOKEN
+     * @param string $sign
+     * @param int    $t (timestamp, in second)
      *
      * @return bool
      */
-    public function chkToken(string $app_id = '', string $uuid = '', string $TOKEN = ''): bool
+    public function chkSign(string $app_id = '', string $sign = '', int $t = 0): bool
     {
-        if ('' === $app_id || '' === $uuid || '' === $TOKEN) {
-            libErrno::new()->set(1, 400, 'Authorization Required!');
+        //Validate timestamp (valid in 10 minutes)
+        if (abs(time() - $t) > 600) {
+            libErrno::new()->set(1, 400, 'Requested timestamp ERROR!');
             return false;
         }
 
-        //todo Read app_key from DB by app_id
-        $this->app_key = 'xxxx';
-
-        //Generate MD5 using "app_key + uuid"
-        $md5 = hash('md5', $uuid . $this->app_key);
-
-        //Compare MD5 with TOKEN
-        if ($TOKEN !== $md5) {
+        //Validate app_id
+        if ('' === $app_id) {
             libErrno::new()->set(1, 401, 'Authorization Required!');
             return false;
         }
 
-        //Token check passed
-        return true;
-    }
+        //todo Read app_key from DB by app_id
+        $app_key = 'xxxx';
 
-    /**
-     * Check data sign (remove FILES, TOKEN. add app_key. sort by keys)
-     *
-     * @param string $sign
-     *
-     * @return bool
-     */
-    public function chkSign(string $sign = ''): bool
-    {
+        //App NOT registered
+        if ('' === $app_key) {
+            libErrno::new()->set(1, 402, 'Authorization Required!');
+            return false;
+        }
+
         //Copy data from IOUnit
         $input_data = IOUnit::new()->src_input;
 
         //Remove All FILES keys (Don't sign uploaded file values)
         $input_data = array_diff_key($input_data, array_keys($_FILES));
 
-        //Remove TOKEN & sign (Don't sign TOKEN & sign values)
-        unset($input_data['TOKEN'], $input_data['sign']);
+        //Remove sign value
+        unset($input_data['sign']);
 
         //Add app_key
-        $input_data['app_key'] = $this->app_key;
+        $this->app_key         = &$app_key;
+        $input_data['app_key'] = &$app_key;
 
         //Sort data by keys
         ksort($input_data);
@@ -78,7 +70,7 @@ class hook extends base
 
         //Compare data sign
         if ($sign !== hash('md5', $query)) {
-            libErrno::new()->set(1, 402, 'Signature Error!');
+            libErrno::new()->set(1, 403, 'Signature Error!');
             return false;
         }
 
@@ -107,7 +99,7 @@ class hook extends base
             $args = $reflect->getArgs($c[0], $c[1], $io_unit->src_input);
 
             if (!empty($args['diff'])) {
-                libErrno::new()->set(1, 403, 'Data error: [' . implode(', ', $args['diff']) . '] @ API #' . $c[2]);
+                libErrno::new()->set(1, 404, 'Data error: [' . implode(', ', $args['diff']) . '] @ API #' . ($c[2] ?? $c[0] . '/' . $c[1]));
                 return false;
             }
 
@@ -148,8 +140,8 @@ class hook extends base
     private function escapeXSS(array &$input_data): void
     {
         foreach ($input_data as $key => &$value) {
-            //Skip app_id, uuid, TOKEN, sign
-            if (in_array($key, ['app_id', 'uuid', 'TOKEN', 'sign'], true)) {
+            //Skip app_id, sign
+            if (in_array($key, ['app_id', 'sign'], true)) {
                 continue;
             }
 
