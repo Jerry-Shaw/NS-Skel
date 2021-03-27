@@ -21,10 +21,12 @@ class hook extends base
 
     /**
      * hook constructor.
+     *
+     * @throws \Exception
      */
     public function __construct()
     {
-        parent::new();
+        parent::__construct();
         $this->app_channel = app_channel::new();
     }
 
