@@ -5,8 +5,8 @@ require __DIR__ . '/../../NervSys/NS.php';
 
 //Set core env
 $core_api = \Ext\libCoreApi::new()
-    ->readHeaderKeys('app_id')
-    ->addCorsRecord('*', 'app_id');
+    ->readHeaderKeys('app_key')
+    ->addCorsRecord('*', 'app_key');
 
 //Check data sign
 $core_api->hookBefore('api/', \app\hook::class, 'chkSign');
