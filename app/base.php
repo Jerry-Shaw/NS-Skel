@@ -53,8 +53,10 @@ class base extends Factory
         $this->initLib();
 
         //Load error msg code file
-        $this->lib_errno = libErrno::new()->load('app/msg/code.ini')->set(0, 200);
+        $this->lib_errno = libErrno::new()->load('app/msg/code.ini');
 
+        //Set default errno
+        $this->lib_errno->set(200);
     }
 
     /**

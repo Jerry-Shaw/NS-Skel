@@ -43,13 +43,13 @@ class hook extends base
     {
         //Validate timestamp (valid in 10 minutes)
         if (abs(time() - $t) > 600) {
-            libErrno::new()->set(1, 400);
+            libErrno::new()->set(400, 1);
             return false;
         }
 
         //Validate app_key
         if ('' === $app_key) {
-            libErrno::new()->set(1, 401);
+            libErrno::new()->set(401, 1);
             return false;
         }
 
@@ -72,13 +72,13 @@ class hook extends base
 
         //App NOT registered
         if (empty($app_info)) {
-            libErrno::new()->set(1, 402);
+            libErrno::new()->set(402, 1);
             return false;
         }
 
         //Access blocked
         if (0 !== $app_info['app_status']) {
-            libErrno::new()->set(1, 403);
+            libErrno::new()->set(403, 1);
             return false;
         }
 
@@ -107,7 +107,7 @@ class hook extends base
 
         //Compare data sign
         if ($sign !== hash('md5', $query)) {
-            libErrno::new()->set(1, 404);
+            libErrno::new()->set(404, 1);
             return false;
         }
 
@@ -137,7 +137,7 @@ class hook extends base
             $args = $reflect->getArgs($c[0], $c[1], $io_unit->src_input);
 
             if (!empty($args['diff'])) {
-                libErrno::new()->set(1, 405, 'Data error: [' . implode(', ', $args['diff']) . '] @ API #' . ($c[2] ?? $c[0] . '/' . $c[1]));
+                libErrno::new()->set(405, 1, 'Data error: [' . implode(', ', $args['diff']) . '] @ API #' . ($c[2] ?? $c[0] . '/' . $c[1]));
                 return false;
             }
 
