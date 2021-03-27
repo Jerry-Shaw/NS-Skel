@@ -67,7 +67,7 @@ class hook extends base
             unset($app_info['ch_id'], $app_info['app_key'], $app_info['app_comment'], $app_info['add_time']);
 
             //Add cache
-            $this->lib_cache->set($app_key, $app_info);
+            $this->lib_cache->set($cache_key, $app_info);
         }
 
         //App NOT registered
