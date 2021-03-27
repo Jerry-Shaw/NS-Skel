@@ -30,13 +30,13 @@ class hook extends base
     {
         //Validate timestamp (valid in 10 minutes)
         if (abs(time() - $t) > 600) {
-            libErrno::new()->set(1, 400, 'Requested timestamp ERROR!');
+            libErrno::new()->set(1, 400);
             return false;
         }
 
         //Validate app_id
         if ('' === $app_id) {
-            libErrno::new()->set(1, 401, 'Authorization Required!');
+            libErrno::new()->set(1, 401);
             return false;
         }
 
@@ -45,7 +45,7 @@ class hook extends base
 
         //App NOT registered
         if ('' === $app_key) {
-            libErrno::new()->set(1, 402, 'Authorization Required!');
+            libErrno::new()->set(1, 402);
             return false;
         }
 
@@ -70,7 +70,7 @@ class hook extends base
 
         //Compare data sign
         if ($sign !== hash('md5', $query)) {
-            libErrno::new()->set(1, 403, 'Signature Error!');
+            libErrno::new()->set(1, 403);
             return false;
         }
 
