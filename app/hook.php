@@ -31,15 +31,14 @@ class hook extends base
     }
 
     /**
-     * Check data sign (remove FILES. add app_secret. sort by keys)
+     * Check request authority
      *
      * @param string $app_key
-     * @param string $sign
-     * @param int    $t (timestamp, in second)
+     * @param int    $t
      *
      * @return bool
      */
-    public function chkSign(string $app_key = '', string $sign = '', int $t = 0): bool
+    public function chkAuth(string $app_key = '', int $t = 0): bool
     {
         //Validate timestamp (valid in 10 minutes)
         if (abs(time() - $t) > 600) {
@@ -87,6 +86,19 @@ class hook extends base
         $this->app_channel->app_key    = &$app_key;
         $this->app_channel->app_secret = &$app_info['app_secret'];
 
+        //All passed
+        return true;
+    }
+
+    /**
+     * Check data sign (remove FILES. add app_secret. sort by keys)
+     *
+     * @param string $sign
+     *
+     * @return bool
+     */
+    public function chkSign(string $sign = ''): bool
+    {
         //Copy data from IOUnit
         $input_data = IOUnit::new()->src_input;
 
@@ -111,6 +123,7 @@ class hook extends base
             return false;
         }
 
+        //All passed
         return true;
     }
 
@@ -120,7 +133,7 @@ class hook extends base
      * @return bool
      * @throws ReflectionException
      */
-    public function prepareArgs(): bool
+    public function prepArgs(): bool
     {
         /** @var IOUnit $io_unit */
         $io_unit = IOUnit::new();
