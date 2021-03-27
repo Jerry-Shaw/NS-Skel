@@ -15,18 +15,27 @@ use Ext\libErrno;
  */
 class hook extends base
 {
-    public string $app_key = '';
+    public channel $channel;
 
     /**
-     * Check data sign (remove FILES. add app_key. sort by keys)
+     * hook constructor.
+     */
+    public function __construct()
+    {
+        parent::new();
+        $this->channel = channel::new();
+    }
+
+    /**
+     * Check data sign (remove FILES. add app_secret. sort by keys)
      *
-     * @param string $app_id
+     * @param string $app_key
      * @param string $sign
      * @param int    $t (timestamp, in second)
      *
      * @return bool
      */
-    public function chkSign(string $app_id = '', string $sign = '', int $t = 0): bool
+    public function chkSign(string $app_key = '', string $sign = '', int $t = 0): bool
     {
         //Validate timestamp (valid in 10 minutes)
         if (abs(time() - $t) > 600) {
@@ -35,19 +44,25 @@ class hook extends base
         }
 
         //Validate app_id
-        if ('' === $app_id) {
+        if ('' === $app_key) {
             libErrno::new()->set(1, 401);
             return false;
         }
 
-        //todo Read app_key from DB by app_id
-        $app_key = 'xxxx';
+        //todo Read app_id & app_secret from DB by app_key
+        $app_id     = 'xxxx';
+        $app_secret = 'xxxx';
 
         //App NOT registered
-        if ('' === $app_key) {
+        if ('' === $app_id || '' === $app_secret) {
             libErrno::new()->set(1, 402);
             return false;
         }
+
+        //Copy valid app data to channel
+        $this->channel->app_id     = &$app_id;
+        $this->channel->app_key    = &$app_key;
+        $this->channel->app_secret = &$app_secret;
 
         //Copy data from IOUnit
         $input_data = IOUnit::new()->src_input;
@@ -58,9 +73,8 @@ class hook extends base
         //Remove sign value
         unset($input_data['sign']);
 
-        //Add app_key
-        $this->app_key         = &$app_key;
-        $input_data['app_key'] = &$app_key;
+        //Add app_secret
+        $input_data['app_secret'] = &$app_secret;
 
         //Sort data by keys
         ksort($input_data);
@@ -85,8 +99,9 @@ class hook extends base
      */
     public function prepareArgs(): bool
     {
-        //Init needed libs
+        /** @var IOUnit $io_unit */
         $io_unit = IOUnit::new();
+        /** @var Reflect $reflect */
         $reflect = Reflect::new();
 
         //Copy c_list from Router
@@ -113,15 +128,17 @@ class hook extends base
     /**
      * Make stats
      *
-     * @param string $app_id
-     *
      * @return bool
      */
-    public function apiStats(string $app_id): bool
+    public function apiStats(): bool
     {
         //Copy useful values
         $ip  = App::new()->client_ip;
         $cmd = Router::new()->cgi_cmd;
+
+        $app_id     = $this->channel->app_id;
+        $app_key    = $this->channel->app_key;
+        $app_secret = $this->channel->app_secret;
 
         //todo Copy user ID from input data or DB
         $user_id = 'xxxxx';
@@ -140,11 +157,6 @@ class hook extends base
     private function escapeXSS(array &$input_data): void
     {
         foreach ($input_data as $key => &$value) {
-            //Skip app_id, sign
-            if (in_array($key, ['app_id', 'sign'], true)) {
-                continue;
-            }
-
             //Escape values recursively
             if (is_array($value)) {
                 $this->escape($value);
