@@ -3,6 +3,7 @@
 namespace app;
 
 use app\model\channel;
+use Core\Execute;
 use Core\Lib\App;
 use Core\Lib\IOUnit;
 use Core\Lib\Router;
@@ -139,6 +140,8 @@ class hook extends base
         $io_unit = IOUnit::new();
         /** @var Reflect $reflect */
         $reflect = Reflect::new();
+        /** @var Execute $execute */
+        $execute = Execute::new();
 
         //Copy c_list from Router
         $c_list = Router::new()->cgi_cmd;
@@ -150,12 +153,12 @@ class hook extends base
             $args = $reflect->getArgs($c[0], $c[1], $io_unit->src_input);
 
             if (!empty($args['diff'])) {
-                libErrno::new()->set(405, 1, 'Data error: [' . implode(', ', $args['diff']) . '] @ API #' . ($c[2] ?? $c[0] . '/' . $c[1]));
+                libErrno::new()->set(405, 1, 'Param error: [' . implode(', ', $args['diff']) . '] @API #' . ($c[2] ?? $c[0] . '/' . $c[1]));
                 return false;
             }
 
             //Add arguments for command
-            $io_unit->addArgs($c[0], $c[1], $args['args']);
+            $execute->addArgs($c[0], $c[1], $args['args']);
         }
 
         return true;
