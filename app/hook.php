@@ -109,7 +109,7 @@ class hook extends base
         unset($input_data['sign']);
 
         //Add app_secret
-        $input_data['app_secret'] = &$app_secret;
+        $input_data['app_secret'] = $this->app_channel->app_secret;
 
         //Sort data by keys
         ksort($input_data);
