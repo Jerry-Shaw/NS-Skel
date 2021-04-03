@@ -2,7 +2,7 @@
 
 namespace app;
 
-use app\model\channel;
+use app\model\app\channel;
 use Core\Execute;
 use Core\Lib\App;
 use Core\Lib\IOUnit;
