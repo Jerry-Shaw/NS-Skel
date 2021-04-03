@@ -18,7 +18,8 @@ use ReflectionException;
  */
 class hook extends base
 {
-    public app_channel $app_channel;
+    /** @var app_user $app_user */
+    public app_user $app_user;
 
     /**
      * hook constructor.
@@ -28,7 +29,7 @@ class hook extends base
     public function __construct()
     {
         parent::__construct();
-        $this->app_channel = app_channel::new();
+        $this->app_user = app_user::new();
     }
 
     /**
@@ -61,10 +62,7 @@ class hook extends base
 
         if (empty($app_info)) {
             //Read app info from DB by app_key
-            $app_info = channel::new()->getInfoByKey($app_key);
-
-            //Only keep app_id, app_secret, app_status
-            unset($app_info['ch_id'], $app_info['app_key'], $app_info['app_comment'], $app_info['add_time']);
+            $app_info = channel::new()->getInfoByKey($app_key, true);
 
             //Add cache
             $this->lib_cache->set($cache_key, $app_info);
@@ -83,9 +81,9 @@ class hook extends base
         }
 
         //Copy valid app data to channel
-        $this->app_channel->app_id     = &$app_info['app_id'];
-        $this->app_channel->app_key    = &$app_key;
-        $this->app_channel->app_secret = &$app_info['app_secret'];
+        $this->app_user->app_id     = &$app_info['app_id'];
+        $this->app_user->app_key    = &$app_key;
+        $this->app_user->app_secret = &$app_info['app_secret'];
 
         //All passed
         return true;
@@ -110,7 +108,7 @@ class hook extends base
         unset($input_data['sign']);
 
         //Add app_secret
-        $input_data['app_secret'] = $this->app_channel->app_secret;
+        $input_data['app_secret'] = $this->app_user->app_secret;
 
         //Sort data by keys
         ksort($input_data);
@@ -175,9 +173,9 @@ class hook extends base
         $ip  = App::new()->client_ip;
         $cmd = Router::new()->cgi_cmd;
 
-        $app_id     = $this->app_channel->app_id;
-        $app_key    = $this->app_channel->app_key;
-        $app_secret = $this->app_channel->app_secret;
+        $app_id     = $this->app_user->app_id;
+        $app_key    = $this->app_user->app_key;
+        $app_secret = $this->app_user->app_secret;
 
         //todo Copy user ID from input data or DB
         $user_id = 'xxxxx';

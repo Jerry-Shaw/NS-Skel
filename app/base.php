@@ -10,6 +10,7 @@ use Ext\libConfGet;
 use Ext\libErrno;
 use Ext\libLock;
 use Ext\libPDO;
+use Ext\libQueue;
 use Ext\libRedis;
 use PDO;
 use Redis;
@@ -32,6 +33,7 @@ class base extends Factory
     public libConfGet $lib_conf;
     public libCache   $lib_cache;
     public libErrno   $lib_errno;
+    public libQueue   $lib_queue;
 
     /**
      * base constructor.
@@ -93,5 +95,6 @@ class base extends Factory
 
         $this->lib_lock  = libLock::new()->bindRedis($this->redis);
         $this->lib_cache = libCache::new()->bindRedis($this->redis);
+        $this->lib_queue = libQueue::new()->bindRedis($this->redis);
     }
 }
